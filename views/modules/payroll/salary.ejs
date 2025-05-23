@@ -1,0 +1,232 @@
+<%- include('../../partials/header') %>
+
+<style>
+  .form-control {
+    border-radius: 5px;
+    padding: 10px;
+    border: 1px solid #ced4da;
+  }
+
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+
+  .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+
+  .card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+  }
+
+  .container-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .content-section {
+    display: none;
+  }
+
+  .content-section.active {
+    display: block;
+  }
+
+  .breadcrumb {
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+  }
+</style>
+
+<!-- Breadcrumbs -->
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/payroll">Payroll</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Salary Structure</li>
+  </ol>
+</nav>
+
+<h1 class="mb-4 text-center">Salary Structure</h1>
+<div class="container-wrapper">
+  <!-- Salary Calculator Section -->
+  <div id="calculator-section" class="content-section active">
+    <h3>Calculate Salary</h3>
+    <div class="card p-4">
+      <form id="salaryForm">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="employeeId" class="form-label">Employee ID</label>
+            <input type="text" id="employeeId" class="form-control" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="employeeName" class="form-label">Employee Name</label>
+            <input type="text" id="employeeName" class="form-control" readonly>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="basicSalary" class="form-label">Basic Salary</label>
+            <input type="number" id="basicSalary" class="form-control" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="department" class="form-label">Department</label>
+            <input type="text" id="department" class="form-control" readonly>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label for="hra" class="form-label">HRA (%)</label>
+            <input type="number" id="hra" class="form-control" min="0" max="100">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="medical" class="form-label">Medical Allowance</label>
+            <input type="number" id="medical" class="form-control" min="0">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="pf" class="form-label">Provident Fund (%)</label>
+            <input type="number" id="pf" class="form-control" min="0" max="100">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="tax" class="form-label">Tax (%)</label>
+            <input type="number" id="tax" class="form-control" min="0" max="100">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="grossSalary" class="form-label">Gross Salary</label>
+            <input type="text" id="grossSalary" class="form-control" readonly>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="netSalary" class="form-label">Net Salary</label>
+            <input type="text" id="netSalary" class="form-control" readonly>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <button type="submit" class="btn btn-primary">Calculate</button>
+          <button type="button" class="btn btn-success" id="update-payslip">Update Payslip</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Ensure Salary Calculator is visible by default
+  document.getElementById('calculator-section').classList.add('active');
+
+  // Attach event listener to form submission
+  const salaryForm = document.getElementById('salaryForm');
+  if (salaryForm) {
+    salaryForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      calculateSalary();
+    });
+  }
+
+  // Fetch employee details when Employee ID is entered
+  document.getElementById('employeeId').addEventListener('blur', function() {
+    const employeeId = this.value.trim();
+    if (!employeeId) return;
+
+    fetch(`/payroll/api/employee/${employeeId}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const employee = data.employee;
+          document.getElementById('employeeName').value = employee.Employee_Name;
+          document.getElementById('department').value = employee.Department_Name;
+          document.getElementById('basicSalary').value = employee.Basic_Salary;
+          
+          // Pre-fill allowance and deduction fields if available
+          document.getElementById('hra').value = employee.HRA ? (employee.HRA / employee.Basic_Salary * 100).toFixed(2) : '10';
+          document.getElementById('medical').value = employee.Medical || '2000';
+          document.getElementById('pf').value = employee.PF_Deductions ? (employee.PF_Deductions / employee.Basic_Salary * 100).toFixed(2) : '12';
+          document.getElementById('tax').value = employee.Tax_Deductions ? (employee.Tax_Deductions / employee.Basic_Salary * 100).toFixed(2) : '10';
+        } else {
+          alert('Employee not found');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching employee details:', error);
+        alert('Empoyee details fetched');
+      });
+  });
+
+  // Update Payslip button event listener
+  document.getElementById('update-payslip').addEventListener('click', function() {
+    const employeeId = document.getElementById('employeeId').value.trim();
+    if (!employeeId) {
+      alert('Please enter a valid Employee ID');
+      return;
+    }
+
+    const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+    const hra = parseFloat(document.getElementById('hra').value) || 0;
+    const medical = parseFloat(document.getElementById('medical').value) || 0;
+    const pf = parseFloat(document.getElementById('pf').value) || 0;
+    const tax = parseFloat(document.getElementById('tax').value) || 0;
+    const netSalary = parseFloat(document.getElementById('netSalary').value) || 0;
+
+    fetch('/payroll/api/update-payslip', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        employeeId, 
+        basicSalary, 
+        hra, 
+        medical, 
+        pf, 
+        tax, 
+        netSalary 
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Payslip updated successfully!');
+      } else {
+        alert('Error updating payslip: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error updating payslip:', error);
+      alert('Failed to update payslip. Please try again.');
+    });
+  });
+});
+
+function calculateSalary() {
+  const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+  const hra = parseFloat(document.getElementById('hra').value) || 0;
+  const medical = parseFloat(document.getElementById('medical').value) || 0;
+  const pf = parseFloat(document.getElementById('pf').value) || 0;
+  const tax = parseFloat(document.getElementById('tax').value) || 0;
+
+  const hraAmount = (basicSalary * hra) / 100;
+  const pfAmount = (basicSalary * pf) / 100;
+  const taxAmount = (basicSalary * tax) / 100;
+
+  const grossSalary = basicSalary + hraAmount + medical;
+  const netSalary = grossSalary - pfAmount - taxAmount;
+
+  document.getElementById('grossSalary').value = grossSalary.toFixed(2);
+  document.getElementById('netSalary').value = netSalary.toFixed(2);
+}
+</script>
+
+<%- include('../../partials/footer') %>

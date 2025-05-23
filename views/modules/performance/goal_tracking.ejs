@@ -1,0 +1,136 @@
+<%- include('../../partials/header') %>
+
+<style>
+  body {
+    background-color: #f8f9fa;
+  }
+
+  h1 {
+    color: #007bff;
+  }
+
+  .box {
+    background: white;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .breadcrumb a {
+    text-decoration: none;
+    color: #007bff;
+  }
+
+  .breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+  }
+
+  .goal-status {
+    width: 150px;
+  }
+
+  button {
+    font-size: 14px;
+    padding: 5px 10px;
+  }
+</style>
+
+<!-- Breadcrumb -->
+<nav class="breadcrumb-container">
+  <div class="container-fluid">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="/performance">Performance</a></li>
+      <li class="breadcrumb-item active text-secondary" aria-current="page">Goal Tracking</li>
+    </ol>
+  </div>
+</nav>
+
+<h1 class="mb-4 text-center">Goal Tracking</h1>
+
+<div class="container my-5">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box shadow p-4 rounded">
+        <h4 class="text-center">Previous Goals</h4>
+        <ul id="goal-list" class="list-group">
+          <% goals.forEach(goal => { %>
+            <li class="list-group-item">
+              <div>
+                <strong><%= goal.Title %></strong> - <span class="badge bg-info"><%= goal.Status %></span>
+                <p class="mb-0"><%= goal.Description %></p>
+                <small>Deadline: <%= goal.Deadline %></small>
+              </div>
+              <div class="d-flex gap-2">
+                <select class="form-select goal-status" data-id="<%= goal.Goal_ID %>">
+                  <option value="Not Started" <%= goal.Status === 'Not Started' ? 'selected' : '' %>>Not Started</option>
+                  <option value="In Progress" <%= goal.Status === 'In Progress' ? 'selected' : '' %>>In Progress</option>
+                  <option value="Completed" <%= goal.Status === 'Completed' ? 'selected' : '' %>>Completed</option>
+                </select>
+                <button class="btn btn-danger btn-sm delete-btn" data-id="<%= goal.Goal_ID %>">Delete</button>
+              </div>
+            </li>
+          <% }) %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const goalStatusElements = document.querySelectorAll(".goal-status");
+
+    // Update goal status
+    goalStatusElements.forEach(select => {
+        select.addEventListener("change", function () {
+            const goalId = this.getAttribute("data-id");
+            const newStatus = this.value;
+
+            fetch(`/performance/goals/status`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ goalId, status: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Goal status updated successfully!");
+                    location.reload();
+                } else {
+                    alert("Error updating goal status.");
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    });
+
+    // Delete Goal
+    document.querySelectorAll(".delete-btn").forEach(button => {
+        button.addEventListener("click", function () {
+            const goalId = this.getAttribute("data-id");
+
+            fetch(`/performance/goals/${goalId}`, { method: "DELETE" })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Goal deleted successfully!");
+                        location.reload();
+                    } else {
+                        alert("Error deleting goal.");
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+        });
+    });
+});
+</script>

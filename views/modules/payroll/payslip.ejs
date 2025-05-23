@@ -1,0 +1,102 @@
+<%- include('../../partials/header') %>
+
+<style>
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+  .table {
+    background-color: white;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  .table th {
+    background-color: #212529;
+    color: white;
+    font-weight: 500;
+    text-align: center;
+  }
+  
+  .table td, .table th {
+    padding: 12px;
+    border: 1px solid #dee2e6;
+  }
+  
+  .table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+  
+  .card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+  }
+  
+  .breadcrumb {
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+  }
+</style>
+
+<!-- Breadcrumbs -->
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/payroll">Payroll</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Payslip</li>
+  </ol>
+</nav>
+
+<h1 class="mb-4 text-center">Payslip Management</h1>
+
+<div class="container">
+  <!-- Payslip Details -->
+  <div class="card p-4 mb-4">
+    <h3>Employee Salary Details</h3>
+    <div class="table-responsive mt-3">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Employee ID</th>
+            <th>Employee Name</th>
+            <th>Basic Salary</th>
+            <th>Allowance</th>
+            <th>Bonus</th>
+            <th>PF Deductions</th>
+            <th>Tax Deduction</th>
+            <th>Net Salary</th>
+          </tr>
+        </thead>
+        <tbody id="paySlipTable">
+          <% if(payslips && payslips.length > 0) { %>
+            <% payslips.forEach((payslip, index) => { %>
+              <tr>
+                <td><%= index + 1 %></td>
+                <td><%= payslip.Employee_ID %></td>
+                <td><%= payslip.Employee_Name %></td>
+                <td><%= Number(payslip.Basic_Pay).toFixed(2) %></td>
+                <td><%= Number(payslip.Allowances).toFixed(2) %></td>
+                <td><%= Number(payslip.Total_Bonus).toFixed(2) %></td>
+                <td><%= Number(payslip.PF_Deductions).toFixed(2) %></td>
+                <td><%= Number(payslip.Tax_Deductions).toFixed(2) %></td>
+                <td><%= Number(payslip.Net_Salary).toFixed(2) %></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="9" class="text-center">No payslip data available</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="/js/payslip.js"></script>
+
+<%- include('../../partials/footer') %>
